@@ -1,27 +1,14 @@
-import * as dotenv from "dotenv";
-import { OpenAI } from "langchain";
-import {initializeAgentExecutor} from "langchain/agents";
-import {Calculator, SerpAPI} from "langchain/tools";
+import { OpenAI } from "langchain"
 
-dotenv.config();
+// To enable streaming, we pass in `streaming: true` to the LLM constructor.
+// Additionally, we pass in a handler for the `handleLLMNewToken` event.
+const chat = new OpenAI({
+  streaming: true
+})
 
-const model = new OpenAI({ temperature: 0.9 });
-const tools = [
-  new SerpAPI(process.env.SERPAPI_API_KEY, {
-    location: "Austin,Texas,United States",
-    hl: "en",
-    gl: "us",
-  }),
-  new Calculator(),
-];
+chat.callbackManager.handleLLMNewToken = async (token: string) => {
+  // We can use this token to update the UI with the latest text.
+  process.stdout.write(token);
+}
 
-const executor = await initializeAgentExecutor(tools, model, 
-   "zero-shot-react-description");
-console.log("Loaded agent.")
-const input = "What is today's date?";
-
-console.log(`Executing with input "${input}"...`);
-
-const result = await executor.call({ input: input });
-
-console.log(`Got output ${result.output}`);
+await chat.call("Write me a song about sparkling water.");
