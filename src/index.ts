@@ -1,8 +1,11 @@
 import * as dotenv from "dotenv";
 import { OpenAI } from "langchain";
 import { PromptTemplate } from "langchain";
+import { LLMChain } from "langchain";
 
 dotenv.config();
+
+const model = new OpenAI({ temperature: 0.9 });
 
 const template = "What is a good name for a company that makes {product}?";
 const prompt = new PromptTemplate({
@@ -10,14 +13,10 @@ const prompt = new PromptTemplate({
   inputVariables: ["product"],
 });
 
-const model = new OpenAI({
-  modelName: "gpt-3.5-turbo",
-  openAIApiKey: process.env.OPENAI_API_KEY,
+const chain = new LLMChain({
+  llm: model,
+  prompt: prompt,
 });
 
-const formattedPrompt = await prompt.format({
-  product: "shoes",
-});
-
-const res = await model.call(formattedPrompt);
+const res = await chain.call({ product: "software" });
 console.log(res);
