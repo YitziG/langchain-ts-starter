@@ -1,14 +1,15 @@
-import { OpenAI } from "langchain"
+import { ChatOpenAI } from "langchain/chat_models";
+import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
 
-// To enable streaming, we pass in `streaming: true` to the LLM constructor.
-// Additionally, we pass in a handler for the `handleLLMNewToken` event.
-const chat = new OpenAI({
-  streaming: true
-})
+const chat = new ChatOpenAI({
+  temperature: 0
+});
 
-chat.callbackManager.handleLLMNewToken = async (token: string) => {
-  // We can use this token to update the UI with the latest text.
-  process.stdout.write(token);
-}
+const response = await chat.call([
+  new SystemChatMessage(
+    "You are a helpful assistant who helps people translate sentences into Spanish."
+  ),
+  new HumanChatMessage("Translate this sentence: 'I am a student.'")
+]);
 
-await chat.call("Write me a song about sparkling water.");
+console.log(response);
