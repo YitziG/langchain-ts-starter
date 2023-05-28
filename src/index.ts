@@ -1,22 +1,27 @@
 import * as dotenv from "dotenv";
 import { OpenAI } from "langchain";
-import { PromptTemplate } from "langchain";
-import { LLMChain } from "langchain";
+import {initializeAgentExecutor} from "langchain/agents";
+import {Calculator, SerpAPI} from "langchain/tools";
 
 dotenv.config();
 
 const model = new OpenAI({ temperature: 0.9 });
+const tools = [
+  new SerpAPI(process.env.SERPAPI_API_KEY, {
+    location: "Austin,Texas,United States",
+    hl: "en",
+    gl: "us",
+  }),
+  new Calculator(),
+];
 
-const template = "What is a good name for a company that makes {product}?";
-const prompt = new PromptTemplate({
-  template: template,
-  inputVariables: ["product"],
-});
+const executor = await initializeAgentExecutor(tools, model, 
+   "zero-shot-react-description");
+console.log("Loaded agent.")
+const input = "What is today's date?";
 
-const chain = new LLMChain({
-  llm: model,
-  prompt: prompt,
-});
+console.log(`Executing with input "${input}"...`);
 
-const res = await chain.call({ product: "software" });
-console.log(res);
+const result = await executor.call({ input: input });
+
+console.log(`Got output ${result.output}`);
