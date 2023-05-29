@@ -1,31 +1,23 @@
-import { LLMChain } from "langchain";
+import { AgentExecutor, ChatAgent } from "langchain/agents";
 import { ChatOpenAI } from "langchain/chat_models";
-import { 
-  SystemMessagePromptTemplate,
-  HumanMessagePromptTemplate,
-  ChatPromptTemplate
- } from "langchain/prompts";
+import { SerpAPI } from "langchain/tools";
 
- const translationPrompt = ChatPromptTemplate.fromPromptMessages([
-  SystemMessagePromptTemplate.fromTemplate(
-    "You are a helpful assistant who helps people translate sentences from {input_language} to {output_language}."
-    ),
-  HumanMessagePromptTemplate.fromTemplate("{text}"),
- ]);
+const tools = [
+  new SerpAPI(process.env.SERP_API_KEY,{
+    location: "Austin, Texas, United States",
+    hl: "en",
+    gl: "us",
+  })
+];
 
-const chat = new ChatOpenAI({
-  temperature: 0
-})
+const agent = ChatAgent.fromLLMAndTools(new ChatOpenAI(), tools);
 
-const chain = new LLMChain({
-  prompt: translationPrompt,
-  llm: chat,
-});
+const executor = AgentExecutor.fromAgentAndTools({agent, tools});
 
-const response = await chain.call({
-  input_language: "English",
-  output_language: "French",
-  text: "Hello, how are you?"
-});
+console.log("Running executor...");
 
-console.log(response)
+const response = await executor.run(
+  "How many people live in the US as of 2023?"
+);
+
+console.log(response);
