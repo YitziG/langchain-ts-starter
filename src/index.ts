@@ -1,23 +1,50 @@
-import { AgentExecutor, ChatAgent } from "langchain/agents";
-import { ChatOpenAI } from "langchain/chat_models";
-import { SerpAPI } from "langchain/tools";
+import { LLMResult } from "langchain/schema";
+import { OpenAI } from "langchain/llms";
 
-const tools = [
-  new SerpAPI(process.env.SERP_API_KEY,{
-    location: "Austin, Texas, United States",
-    hl: "en",
-    gl: "us",
-  })
-];
+// We can pass in a list of CallbackHandlers to the LLM constructor to get callbacks for various events.
+const model = new OpenAI({
+});
 
-const agent = ChatAgent.fromLLMAndTools(new ChatOpenAI(), tools);
+model.callbackManager.handleLLMStart = async (llm: { name: string }, prompts: string[]) => {
+  console.log(JSON.stringify(llm, null, 2));
+  console.log(JSON.stringify(prompts, null, 2));
+}
 
-const executor = AgentExecutor.fromAgentAndTools({agent, tools});
+model.callbackManager.handleLLMEnd = async (output: LLMResult) => {
+  console.log(JSON.stringify(output, null, 2));
+}
 
-console.log("Running executor...");
+model.callbackManager.handleLLMError = async (err: Error) => {
+  console.error(err);
+}
 
-const response = await executor.run(
-  "How many people live in the US as of 2023?"
+
+await model.call(
+  "What would be a good company name a company that makes colorful socks?"
 );
-
-console.log(response);
+// {
+//     "name": "openai"
+// }
+// [
+//     "What would be a good company name a company that makes colorful socks?"
+// ]
+// {
+//   "generations": [
+//     [
+//         {
+//             "text": "\n\nSocktastic Splashes.",
+//             "generationInfo": {
+//                 "finishReason": "stop",
+//                 "logprobs": null
+//             }
+//         }
+//     ]
+//  ],
+//   "llmOutput": {
+//     "tokenUsage": {
+//         "completionTokens": 9,
+//          "promptTokens": 14,
+//          "totalTokens": 23
+//     }
+//   }
+// }
