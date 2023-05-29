@@ -1,15 +1,31 @@
+import { LLMChain } from "langchain";
 import { ChatOpenAI } from "langchain/chat_models";
-import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
+import { 
+  SystemMessagePromptTemplate,
+  HumanMessagePromptTemplate,
+  ChatPromptTemplate
+ } from "langchain/prompts";
+
+ const translationPrompt = ChatPromptTemplate.fromPromptMessages([
+  SystemMessagePromptTemplate.fromTemplate(
+    "You are a helpful assistant who helps people translate sentences from {input_language} to {output_language}."
+    ),
+  HumanMessagePromptTemplate.fromTemplate("{text}"),
+ ]);
 
 const chat = new ChatOpenAI({
   temperature: 0
+})
+
+const chain = new LLMChain({
+  prompt: translationPrompt,
+  llm: chat,
 });
 
-const response = await chat.call([
-  new SystemChatMessage(
-    "You are a helpful assistant who helps people translate sentences into Spanish."
-  ),
-  new HumanChatMessage("Translate this sentence: 'I am a student.'")
-]);
+const response = await chain.call({
+  input_language: "English",
+  output_language: "French",
+  text: "Hello, how are you?"
+});
 
-console.log(response);
+console.log(response)
